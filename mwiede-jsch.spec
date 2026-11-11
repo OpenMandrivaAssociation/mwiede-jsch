@@ -13,7 +13,7 @@ BuildRequires:	java-current-devel
 BuildRequires:	sysjar
 BuildRequires:	mvn(org.bouncycastle:bcprov-jdk18on)
 BuildRequires:	mvn(org.apache.logging.log4j:log4j-api)
-BuildRequires:	mvn(org.slf4j:slf4j-api)
+BuildRequires:	mvn(org.slf4j:slf4j-api) >= 2.0.17
 BuildRequires:	mvn(net.java.dev.jna:jna)
 BuildRequires:	mvn(net.java.dev.jna:jna-platform)
 BuildRequires:	mvn(com.kohlschutter.junixsocket:junixsocket-common)
@@ -43,7 +43,9 @@ find src/main/java -name '*.java' > sources.list
 echo gen/com/jcraft/jsch/Version.java >> sources.list
 test "$(wc -l < sources.list)" -eq 273
 
-CP="%{_javadir}/bcprov-jdk18on.jar:%{_javadir}/log4j-api.jar:%{_javadir}/slf4j/slf4j-api.jar:%{_javadir}/jna.jar:%{_javadir}/jna-platform.jar:%{_javadir}/junixsocket-common.jar"
+# slf4j 2.0.17 ships the API at %{_javadir}/slf4j-api.jar.
+# The 1.7 layout %{_javadir}/slf4j/slf4j-api.jar is a different package.
+CP="%{_javadir}/bcprov-jdk18on.jar:%{_javadir}/log4j-api.jar:%{_javadir}/slf4j-api.jar:%{_javadir}/jna.jar:%{_javadir}/jna-platform.jar:%{_javadir}/junixsocket-common.jar"
 mkdir -p classes
 javac --release 8 -encoding UTF-8 -cp "$CP" -d classes @sources.list
 
@@ -74,6 +76,7 @@ Manifest-Version: 1.0
 Multi-Release: true
 END
 jar cfm mwiede-jsch.jar manifest.txt -C classes .
+jar i mwiede-jsch.jar
 jar tf mwiede-jsch.jar | grep -E 'module-info|\.(java|jar|so|node|wasm)$' && exit 1 || true
 javap -v -classpath mwiede-jsch.jar com.jcraft.jsch.JSch | grep -q 'major version: 52'
 
